@@ -54,79 +54,122 @@ Jenkins配置
 ----
 在安装完成后，可以通过[localhost:8080/manage](localhost:8080/manage)配置Jenkins服务的参数。
 
-###系统配置
+#####系统配置
 点击Configure System可以进入系统配置页面。其中可以配置Jenkins的工作目录、访问端口、邮件通知服务器，git/jdk/ant/maven等工具的参数等。
 
-###安全配置
+#####安全配置
 点击Configure Global Security进入安全配置页面。其中可以配置安全验证等。
 
-###插件管理
+#####插件管理
 点击Manage Plugins进入插件管理页面。其中可以进行插件的更新、安装、卸载等。
 
-###系统信息
-点击System Information进入系统信息页面。其中可以看到系统信息，环境变量，插件信息等。
+#####系统信息
+点击System Information进入系统信息页面。其中可以看到系统信息，环境变量，插件信息等
 
-###负载统计
+#####负载统计
 点击Load Statistics进入负载统计页面。其中可以看到资源利用情况。
 
-###还有很多其他选项如System Log等
+#####还有很多其他选项如System Log等
 
 Jenkins插件
 ----
 Jenkins中很多功能，如与版本控制工具的连接，都是通过插件来完成的。
 
 通过主页->Manage Jenkins->Manage Plugins进入插件管理页面，地址为[http://localhost:8080/pluginManager/](http://localhost:8080/pluginManager/)。
-其中可以进行
+其中可以进行插件的更新、安装、卸载等。如图：
+![](http://i.imgur.com/GDVJnt4.png)
 
-to be continue
-===
+- Updates：可更新的插件列表
+- Avaiable：可安装的插件列表
+- Installed：已安装的插件列表
+- Advanced：设置代理、上传插件
+
+Jenkins默认没有安装git插件，需要安装`git plugin`插件
+
+**注意：**在安装插件时，最好处在翻墙状态。安装完成后，需重启Jenkins服务
+
 一个简单的定时任务
 ----
+Jenkins的执行单元为任务(job)。每一个Job都有自己的工作空间，默认在`var/lib/jenkins/job/job_name/workspace`中。
 
+###任务的创建和配置
 
+首先创建一个简单的定时任务。
+
+点击主页中的New Item,进入创建页面，如图：
+![](http://i.imgur.com/2j8ODxx.jpg)
+
+这里选取Freestyle project，ok进入job配置页面。job配置页面中有许多配置选项：
+
+#####Source Code Management
+Source Code Management中可以设置代码的来源，如git,Subversion等。下一节有详细的介绍。
+#####Build Triggers
+Build Triggers中设置执行的触发器。设置定时任务时，选取Build periodically选项，如图
+![](http://i.imgur.com/CquBVju.png)
+
+时间的格式为`MINUTE HOUR DOM MONTH DOW`，详细介绍可以见Jenkins此处的帮助，点击Schedule栏右边的`？`即可
+
+图中，`H/30 * * * *`代表每30分钟执行一次任务（不一定是整点）
+
+#####Build
+Build中设置构建的详细方法，共四种构建动作：
+
+- Execute Windows batch command
+- Execute shell
+- Invoke Ant
+- Invoke top-level Maven targets
+
+在Execute shell时，最好将shell命令写成shell脚本，放入job的workspace中执行。简单的命令最好分多个step执行。
+
+定时任务的设置如图：
+![](http://i.imgur.com/bjXGf5V.png)
+
+`date +%T>>result`将当前时间输出到result文件中，`./main`执行main程序。
+
+**注意：**执行shell时的当前路径是此job的workspace,这里的文件路径都是相对workspace来说的。
+
+#####Post-build Actions
+Post-build Actions中设置构建后的动作，包括E-mail Notification, Publish JUnit test result report, Deploy war/ear to a container(需要`Deploy plugin`)等。
+
+###任务的执行和记录
+配置好任务后，任务会按照设定好的时间去执行。每次执行不仅会有成功或失败的返回值，还会有这次执行的详细记录。具体记录可以见`Console Output`选项，如图：
+![](http://i.imgur.com/i6RPM50.png)
 
 一个代码驱动的任务
 ----
 
+在实际应用中，Jenkins更多地通过插件是与各种版本管理工具SCM结合起来，比如与SVN、CVS、Git、ClearCase等工具。当代码仓库中代码出现变化后，Jenkins可以自动执行构建、部署、测试等任务。
 
+本文采用了Git作为代码仓库。Git仓库搭建在本地服务器上，采用ssh-key连接。
+
+###任务的创建和配置
+
+首先创建一个简单的代码驱动任务。
+
+在创建job时，选取Freestyle project，ok进入job配置页面。job配置页面中有许多配置选项
+
+#####Source Code Management
+Source Code Management中选择代码的来源，如图：
+![](http://i.imgur.com/VxlQRP4.jpg)
+
+Repository URL中输入git工程的地址，图中为本地的代码仓库
+Credentials中选取所使用的信用凭证。没有的时候可以Add一个，kind选取SSH Username with private key,Private Key直接输入私钥值。public，private key的生成方法同普通git一样。本地仓库中，public key写入代码仓库所在的用户主目录认证文件中，这里为`/home/hjh/.ssh/authorized_keys`。
+
+#####Build Triggers
+Build Triggers中设置执行的触发器。设置代码驱动任务时，选取Poll SCM选项，如图
+![](http://i.imgur.com/7kC06TY.jpg)
+
+图中，`0,15,30,45 * * * *`代表每15分钟检测代码仓库中的变化，如果变化就拉取新的代码。
+
+#####Build
+在代码驱动的任务中，最适合的Build的构建动作应该是ant和maven等工具，适合对于Java工程的自动构建。这里源代码是C++,所以只采用了`make`来构建
+
+
+###任务的执行和记录
+同其他任务一样，任务的每次执行都会有这次执行的详细记录。特别地，还有拉取代码时的记录。
 
 总结
 ----
+同Jenkins所宣传的一样，Jenkins的确实现了跨平台、可扩展、易安装、易配置等特性，很好地支持了代码的自动化构建、部署及测试。
 
-
-!
-### Built exclusively for Markdown ###
-A single backtick in a code span: `` ` ``
-
-A backtick-delimited string in a code span: 
-<!--lang: cpp-->
-	using namespace std;
-	
-	int main(void){
-		int a=1;
-		cout<< a<<endl;
-	}
-
-Enjoy first-class Markdown support with easy access to  Markdown syntax and convenient keyboard shortcuts.
-
-Give them a try:
-
-- **Bold** (`Ctrl+B`) and *Italic* (`Ctrl+I`)
-- Quotes (`Ctrl+Q`)
-- Code blocks (`Ctrl+K`)
-- Headings 1, 2, 3 (`Ctrl+1`, `Ctrl+2`, `Ctrl+3`)
-- Lists (`Ctrl+U` and `Ctrl+Shift+O`)
-
-### See your changes instantly with LivePreview ###
-
-Don't guess if your [hyperlink syntax](http://markdownpad.com) is correct; LivePreview will show you exactly what your document looks like every time you press a key.
-
-### Make it your own ###
-
-Fonts, color schemes, layouts and stylesheets are all 100% customizable so you can turn MarkdownPad into your perfect editor.
-
-### A robust editor for advanced Markdown users ###
-
-MarkdownPad supports multiple Markdown processing engines, including standard Markdown, Markdown Extra (with Table support) and GitHub Flavored Markdown.
-
-With a tabbed document interface, PDF export, a built-in image uploader, session management, spell check, auto-save, syntax highlighting and a built-in CSS management interface, there's no limit to what you can do with MarkdownPad.
+关于本文任何问题，可以联系`zeker@qq.com`。
