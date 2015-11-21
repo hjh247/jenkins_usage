@@ -8,7 +8,7 @@ Jenkins介绍
 
 官方网站地址[http://jenkins-ci.org](http://jenkins-ci.org "官方网站")
 
-[https://wiki.jenkins-ci.org/display/JENKINS/Home](https://wiki.jenkins-ci.org/display/JENKINS/Home"wiki地址")中有jenkins的使用介绍。
+[https://wiki.jenkins-ci.org/display/JENKINS/Home](https://wiki.jenkins-ci.org/display/JENKINS/Home "wiki地址")中有jenkins的使用介绍。
 
 中文介绍可以见项目中《jenkins入门手册.pdf》
 
