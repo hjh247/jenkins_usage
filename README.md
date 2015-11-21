@@ -168,6 +168,19 @@ Build Triggers中设置执行的触发器。设置代码驱动任务时，选取
 ###任务的执行和记录
 同其他任务一样，任务的每次执行都会有这次执行的详细记录。特别地，还有拉取代码时的记录。
 
+使用hooks监视代码
+----
+如上所述，Jenkins的使用通常与代码仓库联系在一起。通常的需求是当代码仓库中代码变化时，Jenkins能迅速知晓，并执行给定任务。对应的实现方法有两种：
+
+1. 采用轮询机制(Poll SCM)，让Jenkins定时访问代码库，检查是否出现变化。前一节即采取了这个办法。
+2. 采用代码仓库的post-commit hook作为触发器，触发Jenkins的自动构建。本节下文将介绍该方法。
+
+###Git Hooks
+钩子(hooks)是Git等工具中的一些脚本，按照特定名字命名，在指定条件（如pre-commit, post-commit）下执行。
+在Git中，每个Git仓库有一个hooks目录，本文中Git仓库为`/home/hjh/gitRepo/project.git/`，其对应hooks目录为`/home/hjh/gitRepo/project.git/hooks` 。在默认情况下，每个hook脚本是以`.sample`结尾的，代表不生效；去掉这个结尾，则会生效。常见hook分为服务端（如post-receive）和客户端(如post-commit)。
+
+###to be continue
+
 总结
 ----
 同Jenkins所宣传的一样，Jenkins的确实现了跨平台、可扩展、易安装、易配置等特性，很好地支持了代码的自动化构建、部署及测试。
